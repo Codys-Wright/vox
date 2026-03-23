@@ -1006,7 +1006,7 @@ impl<'a, C> SessionAcceptorBuilder<'a, C> {
         self
     }
 
-    #[moire::instrument]
+    #[cfg_attr(not(target_arch = "wasm32"), moire::instrument)]
     pub async fn establish<Client: FromVoxSession>(self) -> Result<Client, SessionError>
     where
         C: Conduit<Msg = MessageFamily> + 'static,
@@ -1078,7 +1078,7 @@ impl<'a, C> SessionAcceptorBuilder<'a, C> {
         Ok(client)
     }
 
-    #[moire::instrument]
+    #[cfg_attr(not(target_arch = "wasm32"), moire::instrument)]
     pub async fn establish_or_resume<Client: FromVoxSession>(
         self,
     ) -> Result<SessionAcceptOutcome<Client>, SessionError>
@@ -1200,7 +1200,7 @@ impl<'a, L: Link> SessionTransportAcceptorBuilder<'a, L> {
         self
     }
 
-    #[moire::instrument]
+    #[cfg_attr(not(target_arch = "wasm32"), moire::instrument)]
     pub async fn establish<Client: FromVoxSession>(self) -> Result<Client, SessionError>
     where
         L: Link + MaybeSend + 'static,
@@ -1237,7 +1237,7 @@ impl<'a, L: Link> SessionTransportAcceptorBuilder<'a, L> {
         }
     }
 
-    #[moire::instrument]
+    #[cfg_attr(not(target_arch = "wasm32"), moire::instrument)]
     pub async fn establish_or_resume<Client: FromVoxSession>(
         self,
     ) -> Result<SessionAcceptOutcome<Client>, SessionError>
