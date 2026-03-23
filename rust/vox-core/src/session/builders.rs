@@ -983,7 +983,7 @@ impl<'a, C> SessionAcceptorBuilder<'a, C> {
         self
     }
 
-    #[moire::instrument]
+    #[cfg_attr(not(target_arch = "wasm32"), moire::instrument)]
     pub async fn establish<Client: From<DriverCaller>>(
         self,
         handler: impl Handler<DriverReplySink> + 'static,
@@ -1050,7 +1050,7 @@ impl<'a, C> SessionAcceptorBuilder<'a, C> {
         Ok((client, session_handle))
     }
 
-    #[moire::instrument]
+    #[cfg_attr(not(target_arch = "wasm32"), moire::instrument)]
     pub async fn establish_or_resume<Client: From<DriverCaller>>(
         self,
         handler: impl Handler<DriverReplySink> + 'static,
