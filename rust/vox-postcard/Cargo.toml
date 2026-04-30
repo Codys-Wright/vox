@@ -17,6 +17,7 @@ description = "Postcard serialization for vox with translation plan support"
 rustdoc-args = ["--html-in-header", "arborium-header.html"]
 
 [dependencies]
+chrono = { workspace = true }
 facet = { workspace = true }
 facet-core = { workspace = true }
 facet-reflect = { workspace = true }

@@ -128,6 +128,12 @@ fn serialize_peek_inner<'a>(
         SerializeError::ReflectError(e.to_string())
     }
 
+    if let Some(encoded) = chrono_string_value(peek)? {
+        encode::write_varint(out, encoded.len() as u64);
+        out.write_bytes(encoded.as_bytes());
+        return Ok(());
+    }
+
     // Handle proxy types (e.g. Rx<T>, Tx<T> with #[facet(proxy = ())])
     if let Some(proxy_def) = peek.shape().proxy {
         let proxy_shape = proxy_def.shape;
@@ -342,6 +348,23 @@ fn serialize_peek_inner<'a>(
         }
         _ => Err(SerializeError::UnsupportedType(format!("{}", peek.shape()))),
     }
+}
+
+fn chrono_string_value(peek: Peek<'_, '_>) -> Result<Option<String>, SerializeError> {
+    let shape = format!("{}", peek.shape());
+    if shape == "DateTime<Utc>" {
+        let value = peek
+            .get::<chrono::DateTime<chrono::Utc>>()
+            .map_err(|e| SerializeError::ReflectError(e.to_string()))?;
+        return Ok(Some(value.to_rfc3339()));
+    }
+    if shape == "NaiveDate" {
+        let value = peek
+            .get::<chrono::NaiveDate>()
+            .map_err(|e| SerializeError::ReflectError(e.to_string()))?;
+        return Ok(Some(value.to_string()));
+    }
+    Ok(None)
 }
 
 fn serialize_scalar<'a>(

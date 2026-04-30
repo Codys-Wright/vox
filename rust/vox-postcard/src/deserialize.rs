@@ -175,6 +175,10 @@ fn deserialize_value<'de, 'facet, const BORROW: bool>(
         return partial.end().map_err(re);
     }
 
+    if is_chrono_shape(shape) {
+        return deserialize_chrono(partial, cursor);
+    }
+
     // Scalars
     if let Some(scalar_type) = shape.scalar_type() {
         return deserialize_scalar::<BORROW>(partial, cursor, scalar_type);
@@ -258,6 +262,35 @@ fn deserialize_value<'de, 'facet, const BORROW: bool>(
             deserialize_enum_planned::<BORROW>(partial, cursor, plan, registry)
         }
         _ => Err(DeserializeError::UnsupportedType(format!("{}", shape))),
+    }
+}
+
+fn is_chrono_shape(shape: &'static facet_core::Shape) -> bool {
+    let name = format!("{shape}");
+    name == "DateTime<Utc>" || name == "NaiveDate"
+}
+
+fn deserialize_chrono<'de, 'facet, const BORROW: bool>(
+    partial: Partial<'facet, BORROW>,
+    cursor: &mut Cursor<'de>,
+) -> Result<Partial<'facet, BORROW>, DeserializeError> {
+    let re = |e: facet_reflect::ReflectError| DeserializeError::ReflectError(e.to_string());
+    let shape = format!("{}", partial.shape());
+    let value = cursor.read_str()?;
+    match shape.as_str() {
+        "DateTime<Utc>" => {
+            let parsed = chrono::DateTime::parse_from_rfc3339(value)
+                .map_err(|e| DeserializeError::Custom(format!("invalid DateTime<Utc>: {e}")))?
+                .to_utc();
+            partial.set(parsed).map_err(re)
+        }
+        "NaiveDate" => {
+            let parsed = value
+                .parse::<chrono::NaiveDate>()
+                .map_err(|e| DeserializeError::Custom(format!("invalid NaiveDate: {e}")))?;
+            partial.set(parsed).map_err(re)
+        }
+        _ => Err(DeserializeError::UnsupportedType(shape)),
     }
 }
 
